@@ -9,7 +9,8 @@ import time
 
 def t(func):
     """Returns what the last func() call returns. This should help to notice if func() doesn't return the same value each time and detect that it does different things
-    TODO: save resutls to file to compare first and second runs"""
+    TODO: save resutls to file to compare first and second runs
+    C++: https://stackoverflow.com/a/21995693 2 - Instrumentation"""
     def wrapper(*arg, **kw):
         with _Disable():
             timings, nruns, _ = _benchmark(func, *arg, **kw)
