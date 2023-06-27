@@ -1,10 +1,7 @@
-import timeit
 from time import thread_time_ns  # this way of calling thread_time_ns is faster
-import functools
 import sys
 import gc
 import statistics
-import time
 
 
 def t(func):
@@ -76,7 +73,6 @@ class _Disable:
             gc.enable()
 
 
-
 class _DisableSwitch:
     def __enter__(self):
         self.interval = sys.getswitchinterval()
@@ -85,47 +81,10 @@ class _DisableSwitch:
         sys.setswitchinterval(self.interval)
 
 
-
-
-def old(func):
-    def wrapper(*arg, **kw):
-        no_args = functools.partial(func, *arg, **kw)
-        old = sys.getswitchinterval()
-        sys.setswitchinterval(float("inf"))
-        timer = timeit.Timer(no_args, timer=time.process_time)  # TODO: _ns
-        rep_number, _ = timer.autorange()
-        raw_timings = timer.repeat(number=rep_number)
-        sys.setswitchinterval(old)
-        def format_time(dt):
-            unit = None
-            units = {"ns": 1e-9, "us": 1e-6, "ms": 1e-3, "s": 1.0}
-
-            if unit is not None:
-                scale = units[unit]
-            else:
-                scales = [(scale, unit) for unit, scale in units.items()]
-                scales.sort(reverse=True)
-                for scale, unit in scales:
-                    if dt >= scale:
-                        break
-
-            precision = 3
-            return "%.*g %s" % (precision, dt / scale, unit)
-        timings = [dt / rep_number for dt in raw_timings]
-        print("raw times: %s" % ", ".join(map(format_time, timings)))
-
-        best = min(timings)
-        print("%d loop%s, best of %d: %s per loop"
-            % (rep_number, 's' if rep_number != 1 else '',
-                rep_number, format_time(best)))
-        _plot(timings)
-        return no_args()
-    return wrapper
-
-
 def _plot(raw, normalized, largest):
     MAX_GRAPH = 70
     scale = MAX_GRAPH / largest
     for length, report in zip(raw, normalized):
         scaled = round(length * scale)
+        # TODO: draw diff, draw using cariable symbolds, like 00112233445566778899aabb
         print("=" * scaled + " " * (MAX_GRAPH - scaled) + _ns_str(report))
